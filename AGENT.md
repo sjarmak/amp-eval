@@ -84,16 +84,16 @@ amp-eval/
 
 ```bash
 # Install dependencies
-pip install openai-evals json5 pyyaml pandas matplotlib jupyter
+pip install json5 pyyaml pandas matplotlib jupyter
 
-# Default evaluation (Sonnet-4)
-openai tools evaluate amp-eval/evals/tool_calling_micro.yaml --registry amp-eval/adapters
+# Default evaluation (Sonnet-4 via Amp)
+amp evaluate evals/tool_calling_micro.yaml
 
 # Force GPT-5 for all tasks
-AMP_MODEL=gpt-5 openai tools evaluate amp-eval/evals/single_file_fix.yaml --registry amp-eval/adapters
+AMP_MODEL=gpt-5 amp evaluate evals/single_file_fix.yaml
 
-# Oracle-only evaluation
-AMP_MODEL=o3 openai tools evaluate amp-eval/evals/oracle_knowledge.yaml --registry amp-eval/adapters
+# Oracle evaluation (use 'consult the oracle:' trigger phrase)
+amp evaluate evals/oracle_knowledge.yaml
 
 # Analyze results
 jupyter notebook scripts/aggregate_results.ipynb

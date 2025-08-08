@@ -23,9 +23,9 @@ cd amp-eval
 code .
 
 # 2. Open in DevContainer (when prompted)
-# 3. Configure API keys
+# 3. Configure model selection (no external API keys needed)
 cp .env.example .env
-# Edit .env with your OpenAI/Anthropic keys
+# Optionally set AMP_MODEL=gpt-5 or use 'consult the oracle:' for o3
 
 # 4. Run smoke test
 make test-smoke
