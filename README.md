@@ -135,13 +135,13 @@ docker run -p 8501:8501 --env-file .env amp-eval
 ### Run Evaluations
 ```bash
 # Basic evaluation with default model selection
-openai tools evaluate evals/tool_calling_micro.yaml --registry adapters/
+amp-eval suite evals/tool_calling_micro.yaml
 
 # Force specific model
-AMP_MODEL=gpt-5 openai tools evaluate evals/single_file_fix.yaml --registry adapters/
+AMP_MODEL=gpt-5 amp-eval suite evals/single_file_fix.yaml
 
 # Oracle-only evaluation  
-AMP_MODEL=o3 openai tools evaluate evals/oracle_knowledge.yaml --registry adapters/
+AMP_MODEL=o3 amp-eval suite evals/oracle_knowledge.yaml
 ```
 
 ### Dashboard & Monitoring

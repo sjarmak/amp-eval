@@ -69,7 +69,7 @@ class ToolCallAccuracyGrader:
                     elif actual_value == expected_value:
                         matching_values += 1
             
-            if expected_args:
+            if expected_args and len(expected_args) > 0:
                 args_correct_score = matching_values / len(expected_args)
         elif not expected_args and not actual_args:
             args_correct_score = 1.0

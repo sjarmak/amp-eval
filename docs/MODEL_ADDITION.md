@@ -219,7 +219,7 @@ python -m pytest tests/test_your_provider_runner.py -v
 AMP_MODEL=your-new-model make test-smoke
 
 # Run your validation evaluation
-openai tools evaluate evals/test_your_model.yaml --registry adapters/
+amp-eval suite evals/test_your_model.yaml
 ```
 
 ## 🔍 Validation Checklist
