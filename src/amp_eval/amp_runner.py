@@ -263,15 +263,20 @@ class AmpRunner:
             if not tool_calls:
                 tool_calls = self._extract_tool_calls(result.stdout + "\n" + result.stderr, start_time)
             # If we have tool calls but they lack names, enhance with pattern matching
-            elif tool_calls and not tool_calls[0].get('name'):
+            elif tool_calls:
                 enhanced_calls = self._extract_tool_calls(result.stdout + "\n" + result.stderr, start_time)
-                if enhanced_calls and enhanced_calls[0].get('name'):
-                    # Merge: keep tool_id from logs, add name/args from pattern matching
-                    tool_calls[0]['name'] = enhanced_calls[0]['name']
-                    tool_calls[0]['arguments'] = enhanced_calls[0].get('arguments', {})
+                if enhanced_calls:
+                    # Enhanced tool calls should match the number of parsed calls
+                    # Fill in missing names/args for all tool calls that need them
+                    for i, tool_call in enumerate(tool_calls):
+                        if not tool_call.get('name') and i < len(enhanced_calls):
+                            tool_call['name'] = enhanced_calls[i]['name']
+                            tool_call['arguments'] = enhanced_calls[i].get('arguments', {})
             
-            # Calculate total tokens (use parsed data or estimate)
-            tokens_used = token_usage.get("input_tokens", 0) + token_usage.get("output_tokens", 0)
+            # Calculate total tokens (use model_performance data when available, fallback to token_usage)
+            output_tokens = model_performance.get("outputTokens") or token_usage.get("output_tokens", 0)
+            input_tokens = token_usage.get("input_tokens", 0)
+            tokens_used = input_tokens + output_tokens
             if not tokens_used:
                 tokens_used = self._estimate_tokens(prompt, result.stdout)
             
@@ -283,6 +288,7 @@ class AmpRunner:
             
             response = {
                 "model": model,
+                "prompt": prompt,
                 "latency_s": round(latency, 2),
                 "tokens": tokens_used,
                 "token_usage": token_usage,

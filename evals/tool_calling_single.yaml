@@ -1,0 +1,37 @@
+# Tool Calling Single Test
+# Quick test for debugging tool-calling accuracy
+
+name: tool_calling_single
+description: "Single test case for debugging tool-calling"
+
+eval_type: single_response
+registry_path: amp-eval/adapters
+runner: amp_runner
+
+dataset:
+  - prompt: "List all Python files in the current directory"
+    expected_tool: "glob"
+    expected_args: {"filePattern": "*.py"}
+    id: "list_python_files"
+
+scoring:
+  # Grade based on first tool call correctness
+  method: "tool_call_accuracy"
+  criteria:
+    - tool_name_correct: 40  # 40% for correct tool name
+    - args_present: 30       # 30% for having required args
+    - args_correct: 30       # 30% for correct arg values
+  
+  pass_threshold: 70  # 70% to pass
+  
+grading_template: |
+  First tool call analysis:
+  Tool name: {actual_tool} (expected: {expected_tool})
+  Arguments: {actual_args}
+  Expected: {expected_args}
+  Score: {score}/100
+
+metadata:
+  model_tags: ["tool_calling", "single", "debug"]
+  timeout_seconds: 30
+  retry_limit: 0  # No retries - first attempt only
