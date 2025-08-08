@@ -38,4 +38,12 @@ python --version
 node --version
 amp --version || echo "Amp CLI not available (might need authentication)"
 
+echo "8. Checking environment..."
+if [ -z "$AMP_API_KEY" ]; then
+    echo "⚠️  WARNING: AMP_API_KEY is not set!"
+    echo "   Set it locally and rebuild: export AMP_API_KEY='your-key'"
+else
+    echo "✅ AMP_API_KEY is set (${AMP_API_KEY:0:10}...)"
+fi
+
 echo "=== Setup Complete ==="
