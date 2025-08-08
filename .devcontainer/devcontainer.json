@@ -31,11 +31,12 @@
       }
     }
   },
-  "postCreateCommand": "npm install -g @sourcegraph/amp && pip install -e . --user && pip install -r requirements-dev.txt && pre-commit install && echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc",
+  "postCreateCommand": "npm install -g @sourcegraph/amp && pip install -r requirements.txt && pip install -r requirements-dev.txt && pip install -e . && pre-commit install",
   "remoteUser": "vscode",
 
   "containerEnv": {
-    "PYTHONPATH": "/workspaces/amp-eval/src"
+    "PYTHONPATH": "/workspaces/amp-eval/src",
+    "PATH": "${localEnv:PATH}:/home/vscode/.local/bin"
   },
   "forwardPorts": [8501, 8888],
   "portsAttributes": {
