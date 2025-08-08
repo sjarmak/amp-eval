@@ -50,10 +50,10 @@ make test-smoke
 
 ```bash
 # Run basic tool calling evaluation (Sonnet-4 default)
-amp-eval evaluate evals/tool_calling_micro.yaml
+amp-eval suite evals/tool_calling_micro.yaml
 
 # Or with GPT-5
-AMP_MODEL=gpt-5 amp-eval evaluate evals/tool_calling_micro.yaml
+AMP_MODEL=gpt-5 amp-eval suite evals/tool_calling_micro.yaml
 
 # View results in dashboard
 streamlit run dashboard/streamlit_app.py

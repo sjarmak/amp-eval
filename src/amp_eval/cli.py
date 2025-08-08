@@ -205,7 +205,11 @@ def _display_suite_summary(results: list) -> None:
     table.add_row("Total Evaluations", str(total))
     table.add_row("Successful", str(successful))
     table.add_row("Failed", str(total - successful))
-    table.add_row("Success Rate", f"{(successful/total)*100:.1f}%")
+    
+    if total > 0:
+        table.add_row("Success Rate", f"{(successful/total)*100:.1f}%")
+    else:
+        table.add_row("Success Rate", "N/A")
     
     # Model distribution
     models = {}

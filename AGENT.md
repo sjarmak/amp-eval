@@ -87,13 +87,13 @@ amp-eval/
 pip install json5 pyyaml pandas matplotlib jupyter
 
 # Default evaluation (Sonnet-4 via Amp)
-amp-eval evaluate evals/tool_calling_micro.yaml
+amp-eval suite evals/tool_calling_micro.yaml
 
 # Force GPT-5 for all tasks
-AMP_MODEL=gpt-5 amp-eval evaluate evals/single_file_fix.yaml
+AMP_MODEL=gpt-5 amp-eval suite evals/single_file_fix.yaml
 
 # Oracle evaluation (use 'consult the oracle:' trigger phrase)
-amp-eval evaluate evals/oracle_knowledge.yaml
+amp-eval suite evals/oracle_knowledge.yaml
 
 # Analyze results
 jupyter notebook scripts/aggregate_results.ipynb
