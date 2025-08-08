@@ -112,7 +112,7 @@ class AmpRunner:
         start_time = time.time()
         
         # Build amp command - default is sonnet-4, use --try-gpt5 for GPT-5
-        cmd = ["amp", "-x"]
+        cmd = ["amp", "--dangerously-allow-all", "-x"]
         if model == "gpt-5":
             cmd.append("--try-gpt5")
         cmd.append(prompt)
