@@ -7,7 +7,7 @@ This guide gets you from zero to running evaluations quickly.
 ### Prerequisites
 - VS Code with Docker extension
 - Git access to the repository
-- Amp CLI access (no external API keys needed)
+- Amp API key (get from [ampcode.com](https://ampcode.com) → Settings → API Keys)
 
 ### Step 1: Clone and Open
 
@@ -23,7 +23,21 @@ code .
 2. Wait for container build (2-3 minutes first time)
 3. Dependencies install automatically
 
-### Step 3: Configure Model Selection
+### Step 3: Set Your Amp API Key
+
+**Important**: You need to configure your Amp API key inside the container to run evaluations.
+
+```bash
+# Inside the devcontainer terminal:
+export AMP_API_KEY="your-key-from-ampcode.com-settings"
+
+# Verify authentication works
+python check_amp_auth.py
+```
+
+> 💡 **Get your API key**: Visit [ampcode.com](https://ampcode.com) → Settings → API Keys
+
+### Step 4: Configure Model Selection
 
 ```bash
 # Copy environment template (optional)
@@ -34,7 +48,7 @@ cp .env.example .env
 # Use 'consult the oracle:' in prompts for o3 access
 ```
 
-### Step 4: Test Installation
+### Step 5: Test Installation
 
 ```bash
 # Run smoke test (via Amp CLI)
@@ -46,7 +60,7 @@ make test-smoke
 # ✅ Cost tracking active
 ```
 
-### Step 5: Run Your First Evaluation
+### Step 6: Run Your First Evaluation
 
 ```bash
 # Run basic tool calling evaluation (Sonnet-4 default)
