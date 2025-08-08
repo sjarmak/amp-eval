@@ -1,13 +1,11 @@
 # Quick Start Guide - Amp Evaluation Suite
 
-## 🚀 Get Running in 5 Minutes
+Get running evaluations in 5 minutes with structured data capture from Amp debug logs.
 
-This guide gets you from zero to running evaluations quickly.
-
-### Prerequisites
-- VS Code with Docker extension
-- Git access to the repository
-- Amp API key (get from [ampcode.com](https://ampcode.com) → Settings → API Keys)
+## Prerequisites
+- Python 3.11+
+- VS Code with Docker extension (for DevContainer)
+- Amp API key from [ampcode.com](https://ampcode.com/settings/api-keys)
 
 ### Step 1: Clone and Open
 
@@ -64,10 +62,10 @@ make test-smoke
 
 ```bash
 # Run basic tool calling evaluation (Sonnet-4 default)
-amp-eval suite evals/tool_calling_micro.yaml
+python -m src.amp_eval.cli suite evals/tool_calling_micro.yaml
 
 # Or with GPT-5
-AMP_MODEL=gpt-5 amp-eval suite evals/tool_calling_micro.yaml
+AMP_MODEL=gpt-5 python -m src.amp_eval.cli suite evals/tool_calling_micro.yaml
 
 # View results in dashboard
 streamlit run dashboard/streamlit_app.py
@@ -75,27 +73,15 @@ streamlit run dashboard/streamlit_app.py
 
 Visit http://localhost:8501 to see your results!
 
-## 🎯 What's Next?
+## Next Steps
 
-**For Individual Contributors:**
-- Explore [dashboard features](DASHBOARD_GUIDE.md)
-- Try different evaluation suites
-- Learn about [contributing](CONTRIBUTING.md)
+- Try different evaluation suites in `evals/`
+- Explore dashboard features at http://localhost:8501
+- See [Agent Reference](AGENT_REFERENCE.md) for technical details
+- Check [contributing guidelines](CONTRIBUTING.md) to add evaluations
 
-**For Team Leads:**
-- Review [launch planning](LAUNCH_PLAN.md) 
-- Set up [cost monitoring](DASHBOARD_GUIDE.md#cost-analysis-panel)
-- Plan team adoption strategy
+## Need Help?
 
-**For Platform Teams:**
-- Study [model integration](MODEL_ADDITION.md)
-- Set up [Slack notifications](../src/amp_eval/integrations/slack.py)
-- Configure CI/CD integration
-
-## 🆘 Need Help?
-
-- **Documentation**: Check the [docs/](.) directory
-- **Issues**: Create GitHub issue with reproduction steps
-- **Questions**: Ask in #amp-eval Slack channel
-
-Happy evaluating! 🎉
+- Check documentation in `docs/` directory
+- Create GitHub issue with reproduction steps
+- Review troubleshooting in [Agent Reference](AGENT_REFERENCE.md)

@@ -1,186 +1,215 @@
-# Amp Model-Efficacy Evaluation Agent
-Make sure you activate the relevant environment before running code!
+# Agent Implementation Guide
 
-## 📜 Purpose
-Benchmark three conversational models—**Sonnet-4**, **GPT-5**, and **o3 ("oracle")**—on
-tool-calling accuracy, code-fix success, and knowledge-retrieval scenarios common to coding-agent workflows.
+This file documents the implementation details of the Amp Evaluation Suite for future development and maintenance.
 
-## 🛠️ Registered Tools
-| Tool name           | Description                               | When to use                          |
-|---------------------|-------------------------------------------|--------------------------------------|
-| `git_branch`        | Create / switch git branches              | Always before modifying code         |
-| `git_commit`        | Stage & commit changes                    | After tests pass                     |
-| `file_edit`         | Insert / replace code blocks              | All code modifications               |
-| `run_tests`         | Execute repo's test suite                 | To verify fixes/refactors            |
+## Commands Reference
 
-*(Keep schemas minimal; see `/evals/tool_schemas/`)*
-
-## 🧠 Model Selection Rules
-1. **Oracle trigger** (highest priority): prompt starts with `"consult the oracle:"`
-2. **CLI flag override**: `--try-gpt5` forces GPT-5 usage
-3. **Environment variable**: `AMP_MODEL={sonnet-4,gpt-5,o3}`
-4. **Rules engine**: auto-upgrade to GPT-5 when:
-   - `diff_lines > 40` (large code changes)
-   - `touched_files > 2` (multi-file modifications)
-5. **Default fallback**: Sonnet-4
-
-## ✅ Success Criteria
-* **Tool call correctness**: first call has right name & args (≥70% accuracy)
-* **Task completion**: unit tests green or output matches reference  
-* **Efficiency**: ≤ 2 retries; within token budget thresholds
-* **Oracle discipline**: at most one o3 invocation per task
-
-## 🏗️ Repository Layout
-
-```
-amp-eval/
-├─ config/
-│  └─ agent_settings.yaml      # Model selection rules and thresholds
-├─ adapters/
-│  └─ amp_runner.py           # OpenAI-Evals compatible wrapper
-├─ evals/
-│  ├─ tool_calling_micro.yaml # 10 function-calling prompts  
-│  ├─ single_file_fix.yaml    # 5 bug-fix tasks graded by pytest
-│  └─ oracle_knowledge.yaml   # 3 prompts requiring oracle (o3) call
-├─ tasks/repos/               # Mini git repos w/ failing tests
-│  ├─ calc/                   # Calculator with syntax errors
-│  ├─ string_utils/           # Text processor with logic bugs
-│  └─ algorithms/             # Fibonacci with infinite loop
-├─ scripts/
-│  └─ aggregate_results.ipynb # Jupyter notebook for metrics analysis
-└─ .vscode/
-   └─ tasks.json             # VS Code task to launch GPT-5
-```
-
-## 📊 Evaluation Suites
-
-### 1. Tool Calling Micro (`tool_calling_micro.yaml`)
-- **Purpose**: Test function-calling accuracy on first attempt
-- **Tasks**: 10 micro-prompts covering common tools (glob, Grep, Read, etc.)
-- **Grading**: Tool name (40%) + args present (30%) + args correct (30%)
-- **Pass threshold**: 70%
-
-### 2. Single File Fix (`single_file_fix.yaml`)  
-- **Purpose**: Test bug-fixing ability on isolated Python files
-- **Tasks**: 5 scenarios (syntax errors, logic bugs, infinite loops, etc.)
-- **Grading**: Tests pass (70%) + correct files modified (20%) + efficiency (10%)
-- **Pass threshold**: 70%
-
-### 3. Oracle Knowledge (`oracle_knowledge.yaml`)
-- **Purpose**: Test oracle triggering and deep reasoning
-- **Tasks**: 3 expert-level prompts requiring o3 capabilities
-- **Grading**: Oracle triggered (25%) + reasoning depth (30%) + technical accuracy (25%) + insights (20%)
-- **Pass threshold**: 75%
-
-## 🎯 Model Performance Targets
-
-| Model | Tool Calling | Bug Fixing | Oracle Knowledge | Token Efficiency |
-|-------|-------------|------------|------------------|------------------|
-| **Sonnet-4** | ≥70% | ≥65% | N/A | ≤8K tokens |
-| **GPT-5** | ≥85% | ≥80% | N/A | ≤16K tokens |
-| **o3** | ≥90% | ≥85% | ≥75% | ≤32K tokens |
-
-## 🚀 Quick Commands
-
+### Development Commands
 ```bash
-# Install dependencies
-pip install json5 pyyaml pandas matplotlib jupyter
+# Typecheck, lint, build
+make lint          # Run linting with ruff and black
+make type-check    # Run mypy type checking
+make format        # Auto-format code with black and ruff
 
-# Default evaluation (Sonnet-4 via Amp)
-amp-eval suite evals/tool_calling_micro.yaml
+# Testing
+make test          # Run full test suite with coverage
+make test-fast     # Run tests without coverage
+make test-smoke    # Quick smoke test validation
 
-# Force GPT-5 for all tasks
-AMP_MODEL=gpt-5 amp-eval suite evals/single_file_fix.yaml
-
-# Oracle evaluation (use 'consult the oracle:' trigger phrase)
-amp-eval suite evals/oracle_knowledge.yaml
-
-# Analyze results
-jupyter notebook scripts/aggregate_results.ipynb
+# Environment setup
+make dev-install   # Install with dev dependencies
+make setup-dev     # Run development environment setup
 ```
 
-## 🔧 Configuration
+### Evaluation Commands
+```bash
+# Run evaluation suites
+python -m src.amp_eval.cli suite evals/tool_calling_micro.yaml
+python -m src.amp_eval.cli suite evals/single_file_fix.yaml
 
-Edit [`config/agent_settings.yaml`](config/agent_settings.yaml) to customize:
+# Force specific models
+AMP_MODEL=gpt-5 python -m src.amp_eval.cli suite [eval-file]
+AMP_MODEL=o3 python -m src.amp_eval.cli suite [eval-file]
 
-- **Model selection precedence**: Oracle trigger → CLI flag → env var → rules → default
-- **Upgrade rules**: Thresholds for diff lines and touched files  
-- **Token budgets**: Per-model efficiency targets
-- **Oracle trigger phrase**: Default `"consult the oracle:"`
+# Debug mode with verbose logging
+AMP_LOG_LEVEL=debug python -m src.amp_eval.cli suite [eval-file]
+```
 
-## 📈 Success Metrics
+## Architecture Overview
 
-### Primary KPIs
-- **First-attempt accuracy**: % of tasks completed correctly on first try
-- **Token efficiency**: Average tokens used per successful completion
-- **Latency**: Average response time per model
-- **Oracle discipline**: % of oracle tasks that actually used o3
+### Core Components
 
-### Secondary Metrics  
-- **Retry rate**: % of tasks requiring multiple attempts
-- **Test pass rate**: % of bug fixes that pass all tests
-- **False oracle triggers**: Cases where oracle was invoked unnecessarily
+1. **AmpRunner** (`src/amp_eval/amp_runner.py`)
+   - Executes Amp CLI with debug logging
+   - Parses structured JSON logs for tool calls, tokens, performance
+   - Handles model selection logic and configuration
 
-## 🎮 VS Code Integration
+2. **Evaluation Engine** (`src/amp_eval/cli.py`)
+   - Loads evaluation suites from YAML
+   - Orchestrates test execution and grading
+   - Saves structured results to JSON
 
-Use the provided VS Code task for quick GPT-5 testing:
+3. **Graders** (`src/amp_eval/graders/`)
+   - `tool_call_accuracy.py` - Scores tool calling correctness
+   - Weighted scoring: tool name (40%), args present (30%), args correct (30%)
 
-1. `Cmd+Shift+P` → "Tasks: Run Task"
-2. Select "Launch Amp with GPT-5" 
-3. Opens new terminal with `AMP_MODEL=gpt-5 amp` ready
+4. **Configuration** (`config/agent_settings.yaml`)
+   - Model selection rules and triggers
+   - Oracle and GPT-5 activation logic
 
-## 🧪 Adding New Evaluations
+### Log-Based Evaluation Implementation
 
-1. **Create evaluation YAML**: Follow OpenAI-Evals format in `evals/`
-2. **Add test repos**: Place failing test scenarios in `tasks/repos/`
-3. **Define grading criteria**: Specify scoring method and thresholds
-4. **Register with adapter**: Ensure `amp_runner.py` can handle the new eval type
-5. **Update documentation**: Add to this README and evaluation matrix
+#### Debug Log Parsing
+```python
+def _parse_amp_debug_logs(self, log_path: str) -> ParsedLogs:
+    """Extract structured data from Amp debug JSON logs."""
+    # Parse for:
+    # - invokeTool messages with tool IDs  
+    # - token_usage entries (input_tokens, output_tokens)
+    # - performance metrics (inferenceDuration, tokensPerSecond)
+```
 
-## 🐛 Troubleshooting
+#### Pattern Matching Fallback
+```python
+def _extract_tool_calls(self, stream: str) -> List[Dict[str, Any]]:
+    """Regex patterns to identify tools from natural language output."""
+    # Patterns for: glob, Grep, Read, create_file, edit_file, etc.
+```
 
-### Common Issues
+#### Hybrid Enhancement
+- **Primary**: Structured data from debug logs (tool_id, tokens, performance)
+- **Enrichment**: Pattern matching adds tool names and arguments when missing
+- **Robustness**: Falls back to pure pattern matching if log parsing fails
 
-**"No module named 'amp_runner'"**
-- Ensure you're running from the `amp-eval/` directory
-- Check that `adapters/amp_runner.py` is executable
+## Model Selection Logic
 
-**"Oracle not triggered"**  
-- Verify prompt starts with exact phrase: `"consult the oracle:"`
-- Check `AMP_MODEL` environment variable isn't overriding
+### Precedence Order
+1. **Oracle trigger**: "consult the oracle:" → o3
+2. **CLI flag**: `--try-gpt5` → gpt-5  
+3. **Environment**: `AMP_MODEL=gpt-5` → gpt-5
+4. **Rules**: Based on diff_lines, touched_files → configured model
+5. **Default**: sonnet-4
 
-**"Tests failing immediately"**
-- Ensure test repositories in `tasks/repos/` have correct structure
-- Verify Python path includes repo directories
+### Configuration Example
+```yaml
+default_model: 'sonnet-4'
+oracle_trigger: 
+  phrase: 'consult the oracle:'
+  model: 'o3'
+cli_flag_gpt5:
+  flag: '--try-gpt5'
+  model: 'gpt-5'
+rules:
+  - condition: 'diff_lines > 40 AND touched_files > 2'
+    target_model: 'gpt-5'
+```
 
-**"Token budget exceeded"**
-- Review token thresholds in `config/agent_settings.yaml`
-- Consider upgrading to higher-capacity model
+## Data Structures
 
-## 🛣️ Roadmap
+### ParsedLogs TypedDict
+```python
+class ParsedLogs(TypedDict):
+    tool_calls: List[Dict[str, Any]]    # Tool execution data
+    token_usage: Dict[str, int]         # Input/output token counts  
+    perf: Dict[str, Any]                # Performance metrics
+```
 
-### Phase 1: Core Framework ✅
-- [x] Model selection logic
-- [x] OpenAI-Evals integration  
-- [x] Basic evaluation suites
-- [x] Results aggregation
+### Evaluation Result Structure
+```json
+{
+  "model": "sonnet-4",
+  "latency_s": 4.88,
+  "tokens": 267,
+  "token_usage": {"input_tokens": 7, "output_tokens": 260},
+  "model_performance": {
+    "inferenceDuration": "4.88s", 
+    "tokensPerSecond": 53.3,
+    "outputTokens": 260
+  },
+  "tool_calls": [{
+    "tool_id": "toolu_vrtx_01ABC...",
+    "name": "glob", 
+    "arguments": {"filePattern": "*.py"}
+  }],
+  "success": true,
+  "stdout": "Found 6 Python files...",
+  "stderr": "",
+  "returncode": 0
+}
+```
 
-### Phase 2: Advanced Evaluations 🚧
-- [ ] Multi-file refactoring tasks
-- [ ] Performance optimization challenges
-- [ ] Security vulnerability detection
-- [ ] API integration scenarios
+## Testing Strategy
 
-### Phase 3: Production Features 📋
-- [ ] Continuous evaluation pipeline
-- [ ] Model performance tracking  
-- [ ] Automated regression detection
-- [ ] Integration with Amp CLI analytics
+### Smoke Test Validation
+```bash
+make test-smoke
+# Validates:
+# - Tool calling detection works
+# - Model selection routing functions  
+# - Token usage capture active
+```
 
-## 📞 Support
+### Unit Testing Approach
+- Mock Amp CLI execution for consistent testing
+- Test log parsing with sample debug JSON fixtures
+- Validate grader scoring with known tool calls
+- Test pattern matching fallback scenarios
 
-For questions or issues:
-1. Check this documentation first
-2. Review evaluation YAML files for examples
-3. Examine `amp_runner.py` for implementation details
-4. Create issue with reproduction steps and logs
+## Common Debugging
+
+### Log Analysis
+```bash
+# Check debug logs
+tail -f ~/.cache/amp/logs/cli.log | jq .
+
+# Look for specific log entries
+grep "invokeTool\|token_usage" ~/.cache/amp/logs/cli.log
+```
+
+### Evaluation Debugging
+```bash
+# Run single evaluation with debug output
+AMP_LOG_LEVEL=debug python -c "
+from src.amp_eval.amp_runner import AmpRunner
+runner = AmpRunner()
+result = runner.run_amp('List Python files', 'sonnet-4')
+print(result)
+"
+```
+
+### Performance Monitoring
+```bash
+# Check evaluation timing and token usage
+cat results/results_*.json | jq '.[] | {latency: .latency_s, tokens: .tokens, model: .model}'
+```
+
+## Future Enhancements
+
+### Planned Improvements
+- [ ] Real-time evaluation dashboard updates
+- [ ] Cost budget alerts and controls  
+- [ ] Advanced grading with LLM judges
+- [ ] Multi-turn conversation evaluations
+- [ ] Repository-level code change evaluations
+
+### Architecture Extensions
+- [ ] Plugin system for custom graders
+- [ ] Distributed evaluation across multiple Amp instances
+- [ ] Integration with CI/CD pipelines
+- [ ] Evaluation result comparison and regression detection
+
+## Dependencies
+
+### Core Libraries
+- `pydantic` - Configuration validation
+- `yaml` - Evaluation suite definitions  
+- `loguru` - Structured logging
+- `streamlit` - Dashboard interface
+
+### Development Tools
+- `pytest` - Testing framework
+- `mypy` - Type checking
+- `ruff` + `black` - Code linting and formatting
+- `pre-commit` - Git hooks for quality
+
+This implementation provides a robust foundation for evaluating AI coding assistants with detailed metrics and structured data capture.
