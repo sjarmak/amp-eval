@@ -176,34 +176,5 @@ class SecretManager:
 # Global instance
 _secret_manager = SecretManager()
 
-def get_openai_key() -> str:
-    """Get OpenAI API key from secure storage."""
-    key_sources = [
-        'amp-eval/openai-key',  # AWS Secrets Manager
-        'secret/openai/api-key',  # Vault path
-        'OPENAI_API_KEY'  # Environment fallback
-    ]
-    
-    for source in key_sources:
-        try:
-            return _secret_manager.get_secret(source)
-        except SecretError:
-            continue
-    
-    raise SecretError("OpenAI API key not found in any configured secret store")
-
-def get_anthropic_key() -> str:
-    """Get Anthropic API key from secure storage."""
-    key_sources = [
-        'amp-eval/anthropic-key',
-        'secret/anthropic/api-key',
-        'ANTHROPIC_API_KEY'
-    ]
-    
-    for source in key_sources:
-        try:
-            return _secret_manager.get_secret(source)
-        except SecretError:
-            continue
-    
-    raise SecretError("Anthropic API key not found in any configured secret store")
+# Legacy API key functions removed - this tool evaluates Amp only
+# If you need to access external APIs directly, use appropriate SDK clients

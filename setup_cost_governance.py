@@ -209,7 +209,7 @@ def main():
         print("6. Clean old data:         python -m src.amp_eval.cost_cli cleanup")
         print("7. Run example:            python example_cost_governance.py")
         
-        print("\n📚 Documentation: docs/PHASE8_COST_GOVERNANCE.md")
+        print("\n📚 Documentation: See README.md for setup instructions")
         
     else:
         print("\n❌ Setup failed. Please check the error messages above.")

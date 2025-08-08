@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 
-from ..models import ModelConfig, ModelProvider, ModelRunnerFactory, BaseModelRunner
+# Models removed - evaluations use amp_runner.py for Amp CLI integration
 from ..graders import GraderPluginLoader, BaseGrader
 
 
