@@ -26,16 +26,14 @@
         "python.linting.mypyEnabled": true,
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-          "source.organizeImports": true
+          "source.organizeImports": "explicit"
         }
       }
     }
   },
   "postCreateCommand": "pip install -e . && pip install -r requirements-dev.txt && pre-commit install",
   "remoteUser": "vscode",
-  "mounts": [
-    "source=${localWorkspaceFolder}/.env,target=/workspaces/amp-eval/.env,type=bind,consistency=cached"
-  ],
+
   "containerEnv": {
     "PYTHONPATH": "/workspaces/amp-eval/src"
   },
