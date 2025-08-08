@@ -92,18 +92,39 @@ class AmpRunner:
         # 5. Default fallback
         return self.config['default_model']
     
-    def _evaluate_rule(self, rule: Dict[str, Any], diff_lines: int, touched_files: int) -> bool:
-        """Evaluate a single rule condition."""
+    def _evaluate_rule(self, rule: Dict[str, Any], diff_lines: int, touched_files: int, **context) -> bool:
+        """Evaluate a single rule condition with context."""
         condition = rule['condition']
         
-        # Simple condition parsing for demo
-        if 'diff_lines > 40' in condition and diff_lines > 40:
-            return True
-        if 'touched_files > 2' in condition and touched_files > 2:
-            return True
-        if 'AND' in condition:
-            # Both conditions must be true
-            return diff_lines > 40 and touched_files > 2
+        # Create evaluation context
+        eval_context = {
+            'diff_lines': diff_lines,
+            'touched_files': touched_files,
+            **context
+        }
+        
+        # Simple expression evaluator for basic conditions
+        try:
+            # Replace variables in condition
+            for var, value in eval_context.items():
+                condition = condition.replace(var, str(value))
+            
+            # Handle basic comparisons
+            condition = condition.replace('==', ' == ').replace('>', ' > ').replace('<', ' < ')
+            condition = condition.replace('AND', ' and ').replace('OR', ' or ')
+            
+            # Safely evaluate simple expressions
+            # Only allow basic comparisons and logical operators
+            allowed_chars = set('0123456789 ()<>=!andor\'\"_')
+            if all(c in allowed_chars or c.isalnum() for c in condition):
+                return eval(condition)
+            
+        except Exception:
+            # Fallback to original logic for malformed conditions
+            if 'diff_lines > 40' in rule['condition'] and diff_lines > 40:
+                return True
+            if 'touched_files > 2' in rule['condition'] and touched_files > 2:
+                return True
         
         return False
     

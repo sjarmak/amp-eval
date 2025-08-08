@@ -108,7 +108,7 @@ Transform the Amp Evaluation Suite from prototype to production-grade platform t
 
 4. **Dashboard Access**
    ```bash
-   streamlit run dashboard/app.py
+   streamlit run dashboard/streamlit_app.py
    ```
 
 **Beta User Responsibilities:**

@@ -27,7 +27,7 @@ def demo_model_runners():
         name="gpt-4o-mini",
         provider=ModelProvider.OPENAI,
         model_id="gpt-4o-mini",
-        api_key=os.getenv("OPENAI_API_KEY", "demo-key"),
+        api_key="demo-key",  # Not used - models accessed via Amp
         max_tokens=100,
         temperature=0.0
     )

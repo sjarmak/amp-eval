@@ -21,12 +21,12 @@ dataset:
 
   - prompt: "Read the contents of README.md"
     expected_tool: "Read"
-    expected_args: {"path": "/Users/sjarmak/Documents/amp-eval/README.md"}
+    expected_args: {"path": "{{ workspace_root }}/README.md"}
     id: "read_readme"
 
   - prompt: "Create a new file called test.py with a hello world function"
     expected_tool: "create_file"
-    expected_args: {"path": "/Users/sjarmak/Documents/amp-eval/test.py"}
+    expected_args: {"path": "{{ workspace_root }}/test.py"}
     id: "create_test_file"
 
   - prompt: "Edit the file config.yaml to change port from 8080 to 3000"
@@ -46,7 +46,7 @@ dataset:
 
   - prompt: "Get diagnostics for the src directory"
     expected_tool: "get_diagnostics"
-    expected_args: {"path": "/Users/sjarmak/Documents/amp-eval/src"}
+    expected_args: {"path": "{{ workspace_root }}/src"}
     id: "get_src_diagnostics"
 
   - prompt: "Search the codebase for authentication implementation"
@@ -56,7 +56,7 @@ dataset:
 
   - prompt: "Format the file main.py using the formatter"
     expected_tool: "format_file"
-    expected_args: {"path": "/Users/sjarmak/Documents/amp-eval/main.py"}
+    expected_args: {"path": "{{ workspace_root }}/main.py"}
     id: "format_main_py"
 
 scoring:

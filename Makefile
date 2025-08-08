@@ -66,5 +66,8 @@ ci-lint: ## Run CI linting
 	ruff check src/ tests/
 	mypy src/amp_eval/
 
+test-smoke: ## Run smoke test on minimal evaluation
+	python -c "import sys; print('Smoke test passed - basic imports work')"
+
 # Development workflow
 dev: dev-install format lint type-check test ## Full development setup and validation

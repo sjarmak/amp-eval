@@ -56,7 +56,7 @@ amp evaluate evals/tool_calling_micro.yaml
 AMP_MODEL=gpt-5 amp evaluate evals/tool_calling_micro.yaml
 
 # View results in dashboard
-streamlit run dashboard/app.py
+streamlit run dashboard/streamlit_app.py
 ```
 
 Visit http://localhost:8501 to see your results!

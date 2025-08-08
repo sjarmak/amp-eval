@@ -31,7 +31,7 @@ cp .env.example .env
 make test-smoke
 
 # 5. Start dashboard
-streamlit run dashboard/app.py
+streamlit run dashboard/streamlit_app.py
 ```
 
 🎉 Visit http://localhost:8501 to see your evaluation dashboard!
@@ -147,7 +147,7 @@ AMP_MODEL=o3 openai tools evaluate evals/oracle_knowledge.yaml --registry adapte
 ### Dashboard & Monitoring
 ```bash
 # Start dashboard
-streamlit run dashboard/app.py
+streamlit run dashboard/streamlit_app.py
 
 # View cost summary
 python -m amp_eval.monitoring.cost_tracker --summary

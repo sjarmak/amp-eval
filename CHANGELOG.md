@@ -67,7 +67,7 @@ This initial release provides a complete, production-ready AI model evaluation p
 2. Open in VS Code DevContainer
 3. Configure API keys in `.env`
 4. Run `make test-smoke` to validate setup
-5. Launch dashboard with `streamlit run dashboard/app.py`
+5. Launch dashboard with `streamlit run dashboard/streamlit_app.py`
 
 **Documentation:**
 - [Quick Start Guide](docs/QUICK_START.md) - Get running in 5 minutes
