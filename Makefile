@@ -67,7 +67,11 @@ ci-lint: ## Run CI linting
 	mypy src/amp_eval/
 
 test-smoke: ## Run smoke test on minimal evaluation
-	python -c "import sys; print('Smoke test passed - basic imports work')"
+	@if [ -f venv/bin/activate ]; then \
+		. venv/bin/activate && python scripts/smoke_test.py; \
+	else \
+		python3 scripts/smoke_test.py; \
+	fi
 
 # Development workflow
 dev: dev-install format lint type-check test ## Full development setup and validation
