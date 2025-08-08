@@ -85,7 +85,7 @@ fi
 
 # Push to GitHub
 echo -e "${BLUE}📤 Pushing to GitHub...${NC}"
-git push -u origin master
+git push -u origin main
 
 echo -e "${GREEN}✅ Code pushed to GitHub${NC}"
 
@@ -137,7 +137,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${BLUE}🛡️  Setting up branch protection...${NC}"
     
     # Note: This requires admin permissions and might fail for personal repos
-    gh api repos/:owner/:repo/branches/master/protection \
+    gh api repos/:owner/:repo/branches/main/protection \
         --method PUT \
         --field required_status_checks='{"strict":true,"contexts":["ci"]}' \
         --field enforce_admins=true \
