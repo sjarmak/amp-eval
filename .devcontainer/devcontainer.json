@@ -31,7 +31,7 @@
       }
     }
   },
-  "postCreateCommand": "pip install -e . && pip install -r requirements-dev.txt && pre-commit install",
+  "postCreateCommand": "npm install -g @sourcegraph/amp && pip install -e . && pip install -r requirements-dev.txt && pre-commit install",
   "remoteUser": "vscode",
 
   "containerEnv": {
