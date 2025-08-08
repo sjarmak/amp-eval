@@ -7,7 +7,7 @@ This guide gets you from zero to running evaluations quickly.
 ### Prerequisites
 - VS Code with Docker extension
 - Git access to the repository
-- OpenAI or Anthropic API key
+- Amp CLI access (no external API keys needed)
 
 ### Step 1: Clone and Open
 
@@ -23,26 +23,21 @@ code .
 2. Wait for container build (2-3 minutes first time)
 3. Dependencies install automatically
 
-### Step 3: Configure Environment
+### Step 3: Configure Model Selection
 
 ```bash
-# Copy environment template
+# Copy environment template (optional)
 cp .env.example .env
 
-# Edit with your API keys
-code .env
-```
-
-Add your keys:
-```bash
-OPENAI_API_KEY=sk-your-key-here
-ANTHROPIC_API_KEY=sk-ant-your-key-here
+# Optionally set model via environment
+# AMP_MODEL=gpt-5  # For GPT-5 instead of default Sonnet-4
+# Use 'consult the oracle:' in prompts for o3 access
 ```
 
 ### Step 4: Test Installation
 
 ```bash
-# Run smoke test (uses ~$1 in API calls)
+# Run smoke test (via Amp CLI)
 make test-smoke
 
 # Expected output:
@@ -54,8 +49,11 @@ make test-smoke
 ### Step 5: Run Your First Evaluation
 
 ```bash
-# Run basic tool calling evaluation
-openai tools evaluate evals/tool_calling_micro.yaml --registry adapters/
+# Run basic tool calling evaluation (Sonnet-4 default)
+amp evaluate evals/tool_calling_micro.yaml
+
+# Or with GPT-5
+AMP_MODEL=gpt-5 amp evaluate evals/tool_calling_micro.yaml
 
 # View results in dashboard
 streamlit run dashboard/app.py
