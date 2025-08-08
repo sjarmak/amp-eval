@@ -280,6 +280,12 @@ class AmpRunner:
             if not tokens_used:
                 tokens_used = self._estimate_tokens(prompt, result.stdout)
             
+            # Create corrected token_usage using accurate values
+            corrected_token_usage = {
+                "input_tokens": input_tokens if input_tokens > 0 else self._estimate_tokens(prompt, ""),
+                "output_tokens": output_tokens
+            }
+            
             # Clean up log file
             try:
                 os.unlink(log_file)
@@ -291,7 +297,7 @@ class AmpRunner:
                 "prompt": prompt,
                 "latency_s": round(latency, 2),
                 "tokens": tokens_used,
-                "token_usage": token_usage,
+                "token_usage": corrected_token_usage,
                 "model_performance": model_performance,
                 "success": result.returncode == 0,
                 "stdout": result.stdout,
