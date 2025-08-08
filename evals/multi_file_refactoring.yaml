@@ -1,0 +1,86 @@
+# Multi-File Refactoring Evaluation
+# Tests refactoring ability across multiple files and modules
+
+name: multi_file_refactoring
+description: "Evaluates multi-file refactoring scenarios including extraction, renaming, and restructuring"
+
+eval_type: refactoring
+registry_path: amp-eval/adapters
+runner: amp_runner
+
+dataset:
+  - prompt: "Extract the common database connection logic from tasks/repos/web_app/models/user.py and tasks/repos/web_app/models/product.py into a shared database.py module"
+    workspace: "tasks/repos/web_app"
+    test_command: "pytest tests/ -q && python -m mypy . --ignore-missing-imports"
+    expected_files_modified: ["models/user.py", "models/product.py", "models/database.py"]
+    expected_files_created: ["models/database.py"]
+    id: "extract_db_logic"
+    difficulty: "medium"
+    
+  - prompt: "Refactor the authentication system by moving auth functions from tasks/repos/api_server/utils/helpers.py to a new auth/ package with separate modules for validation, tokens, and permissions"
+    workspace: "tasks/repos/api_server"
+    test_command: "pytest tests/ -q && python -c 'import auth.validation, auth.tokens, auth.permissions'"
+    expected_files_modified: ["utils/helpers.py", "main.py", "routes/user.py"]
+    expected_files_created: ["auth/__init__.py", "auth/validation.py", "auth/tokens.py", "auth/permissions.py"]
+    id: "refactor_auth_package"
+    difficulty: "hard"
+    
+  - prompt: "Rename the class 'DataProcessor' to 'EventProcessor' across all files in the tasks/repos/data_pipeline/ project and update all imports and references"
+    workspace: "tasks/repos/data_pipeline"
+    test_command: "pytest tests/ -q && grep -r 'DataProcessor' . && test $? -ne 0"
+    expected_files_modified: ["processor.py", "main.py", "tests/test_processor.py", "config.py"]
+    id: "rename_class_global"
+    difficulty: "medium"
+    
+  - prompt: "Split the monolithic tasks/repos/game_engine/engine.py file into separate modules: graphics.py, physics.py, audio.py, and input.py while maintaining all functionality"
+    workspace: "tasks/repos/game_engine"
+    test_command: "pytest tests/ -q && python -c 'from engine import GameEngine; print(\"OK\")'"
+    expected_files_created: ["graphics.py", "physics.py", "audio.py", "input.py"]
+    expected_files_modified: ["engine.py"]
+    id: "split_monolithic_module"
+    difficulty: "hard"
+    
+  - prompt: "Refactor the circular import between tasks/repos/messaging/sender.py and tasks/repos/messaging/receiver.py by introducing an interface or moving shared code"
+    workspace: "tasks/repos/messaging"
+    test_command: "pytest tests/ -q && python -c 'import sender, receiver; print(\"No circular import\")'"
+    expected_files_modified: ["sender.py", "receiver.py"]
+    expected_files_created: ["interfaces.py"]
+    id: "fix_circular_imports"
+    difficulty: "hard"
+
+scoring:
+  method: "refactoring_quality"
+  criteria:
+    - tests_pass: 40           # 40% if all tests pass
+    - imports_work: 20         # 20% if all imports resolve correctly
+    - files_created: 15        # 15% if expected files are created
+    - files_modified: 15       # 15% if correct files are modified
+    - code_quality: 10         # 10% for maintaining code quality
+  
+  pass_threshold: 75
+  max_attempts: 3
+
+grading_template: |
+  Multi-file refactoring evaluation for {id}:
+  Difficulty: {difficulty}
+  Test command: {test_command}
+  Test result: {test_status}
+  Files created: {files_created}
+  Files modified: {files_modified}
+  Expected created: {expected_files_created}
+  Expected modified: {expected_files_modified}
+  
+  Code quality metrics:
+  - Imports resolve: {imports_status}
+  - No code duplication: {duplication_check}
+  - Maintains functionality: {functionality_check}
+  
+  Score: {score}/100
+  
+  Test output:
+  {test_output}
+
+metadata:
+  model_tags: ["refactoring", "multi_file", "code_quality"]
+  timeout_seconds: 300
+  workspace_setup: "copy_repo_templates"

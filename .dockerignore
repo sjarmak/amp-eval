@@ -1,0 +1,53 @@
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+venv
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.pytest_cache
+*.egg-info
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+oracle_plan.md
+
+# Development
+.pre-commit-config.yaml
+Makefile
+setup_dev.py
+
+# Results and logs
+results/
+logs/
+*.log
+
+# Test files
+tests/
+.coverage
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore

@@ -1,0 +1,227 @@
+name: Nightly Full Matrix Evaluation
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual trigger
+    inputs:
+      models:
+        description: 'Models to test (comma-separated)'
+        required: false
+        default: 'sonnet-4,gpt-5,o3'
+      upload_results:
+        description: 'Upload results to storage'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  PYTHON_VERSION: "3.10"
+  RESULTS_DATE: ${{ github.event.schedule && github.run_id || github.event.inputs.date || 'manual' }}
+
+jobs:
+  matrix-evaluation:
+    name: "Stage 3: Full Matrix Evaluation"
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false  # Continue other combinations if one fails
+      matrix:
+        model: [sonnet-4, gpt-5, o3]
+        evaluation: [tool_calling_micro, single_file_fix, oracle_knowledge]
+        runner: [ubuntu-latest]  # Can be changed to self-hosted for cost control
+        exclude:
+          # Oracle knowledge only runs on o3
+          - model: sonnet-4
+            evaluation: oracle_knowledge
+          - model: gpt-5
+            evaluation: oracle_knowledge
+    
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      AMP_MODEL: ${{ matrix.model }}
+      
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Create results directory
+        run: |
+          mkdir -p results/$(date +%Y-%m-%d)
+          
+      - name: Run evaluation
+        id: evaluate
+        run: |
+          TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
+          OUTPUT_FILE="results/$(date +%Y-%m-%d)/${TIMESTAMP}_${{ matrix.model }}_${{ matrix.evaluation }}.json"
+          
+          echo "Running ${{ matrix.evaluation }} with ${{ matrix.model }}..."
+          python run_baseline.py \
+            --eval ${{ matrix.evaluation }} \
+            --model ${{ matrix.model }} \
+            --output "$OUTPUT_FILE" \
+            --max-tokens 32000 \
+            --timeout 600
+            
+          echo "output_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "## Evaluation Results: ${{ matrix.model }} on ${{ matrix.evaluation }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "${{ steps.evaluate.outputs.output_file }}" ]; then
+            echo "✅ Evaluation completed successfully" >> $GITHUB_STEP_SUMMARY
+            python scripts/summarize_results.py "${{ steps.evaluate.outputs.output_file }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Evaluation failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+      - name: Upload evaluation results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: nightly-results-${{ matrix.model }}-${{ matrix.evaluation }}-${{ steps.evaluate.outputs.timestamp }}
+          path: results/
+          retention-days: 90
+          
+      - name: Check for regressions
+        if: success()
+        run: |
+          python scripts/check_regression.py \
+            --current "${{ steps.evaluate.outputs.output_file }}" \
+            --baseline "results/baseline/${{ matrix.model }}_${{ matrix.evaluation }}.json" \
+            --threshold 0.05
+            
+      - name: Notify on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          text: |
+            🚨 Nightly evaluation failed
+            Model: ${{ matrix.model }}
+            Evaluation: ${{ matrix.evaluation }}
+            Commit: ${{ github.sha }}
+
+  aggregate-results:
+    name: Aggregate and Store Results
+    runs-on: ubuntu-latest
+    needs: matrix-evaluation
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts/
+          
+      - name: Aggregate results
+        run: |
+          python scripts/aggregate_nightly_results.py \
+            --input-dir artifacts/ \
+            --output results/$(date +%Y-%m-%d)/aggregated_results.json \
+            --format json,csv,parquet
+            
+      - name: Upload to S3 (if configured)
+        if: env.AWS_ACCESS_KEY_ID != null && github.event.inputs.upload_results != 'false'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          aws s3 sync results/$(date +%Y-%m-%d)/ s3://${{ secrets.S3_RESULTS_BUCKET }}/$(date +%Y-%m-%d)/ \
+            --exclude "*.tmp" \
+            --metadata "commit=${{ github.sha }},workflow_run=${{ github.run_id }}"
+            
+      - name: Update dashboard data
+        run: |
+          python scripts/update_dashboard_data.py \
+            --results-file results/$(date +%Y-%m-%d)/aggregated_results.json \
+            --dashboard-data dashboard/data/
+            
+      - name: Create performance report
+        run: |
+          python scripts/generate_performance_report.py \
+            --results results/$(date +%Y-%m-%d)/aggregated_results.json \
+            --output results/$(date +%Y-%m-%d)/performance_report.md
+            
+      - name: Upload final results
+        uses: actions/upload-artifact@v3
+        with:
+          name: nightly-full-results-$(date +%Y-%m-%d)
+          path: results/
+          retention-days: 365
+
+  alert-on-regression:
+    name: Check for Performance Regressions
+    runs-on: ubuntu-latest
+    needs: aggregate-results
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download aggregated results
+        uses: actions/download-artifact@v3
+        with:
+          name: nightly-full-results-$(date +%Y-%m-%d)
+          path: results/
+          
+      - name: Check for regressions
+        id: regression_check
+        run: |
+          python scripts/check_overall_regression.py \
+            --current results/$(date +%Y-%m-%d)/aggregated_results.json \
+            --historical results/historical/ \
+            --output regression_report.json
+            
+      - name: Alert on Slack if regression detected
+        if: steps.regression_check.outputs.regression_detected == 'true'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "text": "🚨 Performance Regression Detected",
+              "attachments": [{
+                "color": "danger",
+                "fields": [{
+                  "title": "Regression Details",
+                  "value": "${{ steps.regression_check.outputs.regression_summary }}",
+                  "short": false
+                }, {
+                  "title": "Commit",
+                  "value": "${{ github.sha }}",
+                  "short": true
+                }, {
+                  "title": "Workflow",
+                  "value": "${{ github.run_id }}",
+                  "short": true
+                }]
+              }]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  amp-eval:
+    build:
+      context: .
+      target: production
+    image: amp-eval:latest
+    container_name: amp-eval-prod
+    restart: unless-stopped
+    
+    environment:
+      # AWS Configuration
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - AWS_ROLE_ARN=${AWS_ROLE_ARN}
+      
+      # Vault Configuration (optional)
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_TOKEN}
+      
+      # Application Configuration
+      - AMP_LOG_LEVEL=${AMP_LOG_LEVEL:-INFO}
+      - AMP_RESULTS_BUCKET=${AMP_RESULTS_BUCKET:-amp-eval-results}
+      
+      # Rate Limiting
+      - RATE_LIMIT_RPM=${RATE_LIMIT_RPM:-60}
+      - RATE_LIMIT_RPH=${RATE_LIMIT_RPH:-3000}
+      - MAX_TOKENS_PER_HOUR=${MAX_TOKENS_PER_HOUR:-100000}
+      - MAX_COST_PER_HOUR=${MAX_COST_PER_HOUR:-50.0}
+    
+    volumes:
+      # Mount results directory
+      - amp-eval-results:/app/results
+      
+      # Mount config (read-only)
+      - ./config:/app/config:ro
+      
+      # Mount evaluations (read-only)
+      - ./evals:/app/evals:ro
+    
+    # Security settings
+    user: "1001:1001"
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import amp_eval; print('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        tag: "amp-eval-{{.ID}}"
+
+volumes:
+  amp-eval-results:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

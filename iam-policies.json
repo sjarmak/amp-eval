@@ -1,0 +1,161 @@
+{
+  "amp-eval-execution-policy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "SecretsManagerAccess",
+        "Effect": "Allow",
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Resource": [
+          "arn:aws:secretsmanager:*:*:secret:amp-eval/*"
+        ]
+      },
+      {
+        "Sid": "CloudWatchLogs",
+        "Effect": "Allow",
+        "Action": [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams"
+        ],
+        "Resource": [
+          "arn:aws:logs:*:*:log-group:/aws/amp-eval/*"
+        ]
+      },
+      {
+        "Sid": "S3ResultsStorage",
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ],
+        "Resource": [
+          "arn:aws:s3:::amp-eval-results/*"
+        ]
+      },
+      {
+        "Sid": "S3ResultsBucket",
+        "Effect": "Allow",
+        "Action": [
+          "s3:ListBucket"
+        ],
+        "Resource": [
+          "arn:aws:s3:::amp-eval-results"
+        ]
+      }
+    ]
+  },
+  
+  "amp-eval-deployment-policy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "ECSTaskExecution",
+        "Effect": "Allow",
+        "Action": [
+          "ecs:RunTask",
+          "ecs:StopTask",
+          "ecs:DescribeTasks",
+          "ecs:DescribeTaskDefinition"
+        ],
+        "Resource": [
+          "arn:aws:ecs:*:*:task-definition/amp-eval:*",
+          "arn:aws:ecs:*:*:task/*"
+        ],
+        "Condition": {
+          "StringEquals": {
+            "ecs:cluster": "amp-eval-cluster"
+          }
+        }
+      },
+      {
+        "Sid": "PassExecutionRole",
+        "Effect": "Allow",
+        "Action": [
+          "iam:PassRole"
+        ],
+        "Resource": [
+          "arn:aws:iam::*:role/amp-eval-execution-role",
+          "arn:aws:iam::*:role/amp-eval-task-role"
+        ]
+      },
+      {
+        "Sid": "ECRAccess",
+        "Effect": "Allow",
+        "Action": [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage"
+        ],
+        "Resource": "*"
+      }
+    ]
+  },
+  
+  "amp-eval-secrets-policy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "CreateAndManageSecrets",
+        "Effect": "Allow",
+        "Action": [
+          "secretsmanager:CreateSecret",
+          "secretsmanager:UpdateSecret",
+          "secretsmanager:PutSecretValue",
+          "secretsmanager:TagResource"
+        ],
+        "Resource": [
+          "arn:aws:secretsmanager:*:*:secret:amp-eval/*"
+        ]
+      },
+      {
+        "Sid": "ListSecrets",
+        "Effect": "Allow",
+        "Action": [
+          "secretsmanager:ListSecrets"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringLike": {
+            "secretsmanager:Name": "amp-eval/*"
+          }
+        }
+      }
+    ]
+  },
+  
+  "amp-eval-cost-control-policy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "BillingAccess",
+        "Effect": "Allow",
+        "Action": [
+          "ce:GetCostAndUsage",
+          "ce:GetDimensionValues",
+          "budgets:ViewBudget"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Sid": "CloudWatchMetrics",
+        "Effect": "Allow",
+        "Action": [
+          "cloudwatch:PutMetricData",
+          "cloudwatch:GetMetricStatistics"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "cloudwatch:namespace": "AmpEval"
+          }
+        }
+      }
+    ]
+  }
+}

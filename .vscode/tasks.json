@@ -1,0 +1,110 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Launch Amp with GPT-5",
+            "type": "shell",
+            "command": "echo",
+            "args": [
+                "AMP_MODEL=gpt-5 amp"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "options": {
+                "env": {
+                    "AMP_MODEL": "gpt-5"
+                }
+            },
+            "detail": "Launch a new terminal with AMP_MODEL=gpt-5 environment variable set"
+        },
+        {
+            "label": "Run Tool Calling Evaluation",
+            "type": "shell",
+            "command": "openai",
+            "args": [
+                "tools",
+                "evaluate",
+                "amp-eval/evals/tool_calling_micro.yaml",
+                "--registry",
+                "amp-eval/adapters"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "detail": "Run the tool calling micro evaluation suite"
+        },
+        {
+            "label": "Run Bug Fix Evaluation",
+            "type": "shell", 
+            "command": "openai",
+            "args": [
+                "tools",
+                "evaluate", 
+                "amp-eval/evals/single_file_fix.yaml",
+                "--registry",
+                "amp-eval/adapters"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "detail": "Run the single file bug fix evaluation suite"
+        },
+        {
+            "label": "Run Oracle Knowledge Evaluation",
+            "type": "shell",
+            "command": "openai",
+            "args": [
+                "tools",
+                "evaluate",
+                "amp-eval/evals/oracle_knowledge.yaml", 
+                "--registry",
+                "amp-eval/adapters"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "options": {
+                "env": {
+                    "AMP_MODEL": "o3"
+                }
+            },
+            "detail": "Run the oracle knowledge evaluation suite with o3 model"
+        },
+        {
+            "label": "Open Results Notebook",
+            "type": "shell",
+            "command": "jupyter",
+            "args": [
+                "notebook",
+                "scripts/aggregate_results.ipynb"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "detail": "Open the results analysis Jupyter notebook"
+        }
+    ]
+}

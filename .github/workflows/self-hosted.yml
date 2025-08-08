@@ -1,0 +1,75 @@
+name: Self-Hosted Runner Configuration
+
+# This workflow configures self-hosted runners for cost control
+# Uncomment and configure when ready to deploy self-hosted infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+        - setup
+        - teardown
+        - scale-up
+        - scale-down
+
+env:
+  RUNNER_VERSION: "2.308.0"
+  
+jobs:
+  configure-runners:
+    name: Configure Self-Hosted Runners
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup runner infrastructure
+        if: github.event.inputs.action == 'setup'
+        run: |
+          echo "Setting up self-hosted runner infrastructure..."
+          # Example using AWS EC2 (customize for your cloud provider)
+          #
+          # aws ec2 run-instances \
+          #   --image-id ami-0c55b159cbfafe1d0 \
+          #   --instance-type t3.medium \
+          #   --key-name amp-eval-runner \
+          #   --security-group-ids sg-12345678 \
+          #   --subnet-id subnet-12345678 \
+          #   --user-data file://scripts/setup-runner.sh \
+          #   --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=amp-eval-runner},{Key=Purpose,Value=ci-cd}]'
+          
+      - name: Scale up runners
+        if: github.event.inputs.action == 'scale-up'
+        run: |
+          echo "Scaling up runner capacity for high-load periods..."
+          # Auto-scaling logic here
+          
+      - name: Scale down runners  
+        if: github.event.inputs.action == 'scale-down'
+        run: |
+          echo "Scaling down runner capacity to reduce costs..."
+          # Auto-scaling logic here
+          
+      - name: Teardown runners
+        if: github.event.inputs.action == 'teardown'
+        run: |
+          echo "Tearing down self-hosted runner infrastructure..."
+          # Cleanup logic here
+
+  cost-monitoring:
+    name: Monitor Runner Costs
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'setup' || github.event.inputs.action == 'scale-up'
+    steps:
+      - name: Setup cost monitoring
+        run: |
+          echo "Setting up cost monitoring for self-hosted runners..."
+          # Configure CloudWatch/monitoring
+          
+      - name: Set budget alerts
+        run: |
+          echo "Configuring budget alerts..."
+          # Set up alerts for cost thresholds

@@ -1,0 +1,149 @@
+# Cross-Language Support Evaluation
+# Tests coding ability across JavaScript/TypeScript, Go, and Rust
+
+name: cross_language_support
+description: "Evaluates multi-language development skills across JS/TS, Go, and Rust"
+
+eval_type: multi_language
+registry_path: amp-eval/adapters
+runner: amp_runner
+
+dataset:
+  # JavaScript/TypeScript tasks
+  - prompt: "Fix the async/await error handling in tasks/repos/js_projects/api_client/client.js and convert it to TypeScript with proper types"
+    workspace: "tasks/repos/js_projects/api_client"
+    test_command: "npm test && tsc --noEmit"
+    build_command: "npm run build"
+    expected_files_modified: ["client.js"]
+    expected_files_created: ["client.ts", "types.ts"]
+    language: "typescript"
+    id: "js_to_ts_conversion"
+    difficulty: "medium"
+    
+  - prompt: "Implement a React component with proper TypeScript interfaces in tasks/repos/js_projects/react_app/components/UserProfile.tsx that handles user data and loading states"
+    workspace: "tasks/repos/js_projects/react_app"
+    test_command: "npm test && npm run type-check"
+    build_command: "npm run build"
+    expected_files_modified: ["components/UserProfile.tsx"]
+    expected_files_created: ["types/User.ts"]
+    language: "typescript"
+    id: "react_typescript_component"
+    difficulty: "medium"
+    
+  - prompt: "Fix the memory leaks in the Node.js application tasks/repos/js_projects/node_server/server.js by properly handling event listeners and streams"
+    workspace: "tasks/repos/js_projects/node_server"
+    test_command: "npm test && node --trace-warnings test_memory.js"
+    expected_files_modified: ["server.js", "handlers/upload.js"]
+    language: "javascript"
+    id: "nodejs_memory_leaks"
+    difficulty: "hard"
+    
+  # Go tasks
+  - prompt: "Fix the goroutine leak in tasks/repos/go_projects/worker_pool/pool.go and implement proper context cancellation"
+    workspace: "tasks/repos/go_projects/worker_pool"
+    test_command: "go test ./... -race && go vet ./..."
+    build_command: "go build -o worker_pool ."
+    expected_files_modified: ["pool.go"]
+    language: "go"
+    id: "go_goroutine_leak"
+    difficulty: "medium"
+    
+  - prompt: "Implement proper error handling and logging in the Go HTTP server tasks/repos/go_projects/http_server/main.go using structured logging"
+    workspace: "tasks/repos/go_projects/http_server"
+    test_command: "go test ./... && golangci-lint run"
+    build_command: "go build -o server ."
+    expected_files_modified: ["main.go", "handlers.go"]
+    expected_files_created: ["logging/logger.go"]
+    language: "go"
+    id: "go_error_handling"
+    difficulty: "medium"
+    
+  - prompt: "Optimize the JSON processing in tasks/repos/go_projects/json_processor/processor.go using streaming and reducing memory allocations"
+    workspace: "tasks/repos/go_projects/json_processor"
+    test_command: "go test ./... -bench=. && go test -memprofile=mem.prof ."
+    build_command: "go build -o processor ."
+    expected_files_modified: ["processor.go"]
+    language: "go"
+    id: "go_json_optimization"
+    difficulty: "hard"
+    
+  # Rust tasks
+  - prompt: "Fix the ownership and borrowing issues in tasks/repos/rust_projects/data_structures/src/linked_list.rs"
+    workspace: "tasks/repos/rust_projects/data_structures"
+    test_command: "cargo test && cargo clippy -- -D warnings"
+    build_command: "cargo build --release"
+    expected_files_modified: ["src/linked_list.rs"]
+    language: "rust"
+    id: "rust_ownership_issues"
+    difficulty: "medium"
+    
+  - prompt: "Implement safe concurrency in tasks/repos/rust_projects/parallel_processor/src/processor.rs using channels and proper error handling"
+    workspace: "tasks/repos/rust_projects/parallel_processor"
+    test_command: "cargo test && cargo test --release -- --test-threads=1"
+    build_command: "cargo build --release"
+    expected_files_modified: ["src/processor.rs", "src/worker.rs"]
+    language: "rust"
+    id: "rust_safe_concurrency"
+    difficulty: "hard"
+    
+  - prompt: "Optimize the unsafe code block in tasks/repos/rust_projects/unsafe_optimization/src/buffer.rs and make it safe while maintaining performance"
+    workspace: "tasks/repos/rust_projects/unsafe_optimization"
+    test_command: "cargo test && cargo miri test && cargo bench"
+    build_command: "cargo build --release"
+    expected_files_modified: ["src/buffer.rs"]
+    language: "rust"
+    id: "rust_unsafe_to_safe"
+    difficulty: "hard"
+
+scoring:
+  method: "language_specific_quality"
+  criteria:
+    - compilation_success: 25     # 25% if code compiles/builds
+    - tests_pass: 30              # 30% if tests pass
+    - language_idioms: 25         # 25% if using language-specific best practices
+    - performance: 10             # 10% for performance considerations
+    - code_quality: 10            # 10% for overall code quality
+  
+  pass_threshold: 75
+  max_attempts: 2
+
+grading_template: |
+  Cross-language evaluation for {id}:
+  Language: {language}
+  Difficulty: {difficulty}
+  
+  Build/Compilation:
+  Build command: {build_command}
+  Build result: {build_status}
+  
+  Testing:
+  Test command: {test_command}
+  Test result: {test_status}
+  
+  Language-specific analysis:
+  - Idiomatic code: {idiomatic_score}
+  - Performance: {performance_score}
+  - Best practices: {best_practices_score}
+  - Language features used: {language_features}
+  
+  Files modified: {files_modified}
+  Expected: {expected_files_modified}
+  
+  Score: {score}/100
+  
+  Build output:
+  {build_output}
+  
+  Test output:
+  {test_output}
+
+metadata:
+  model_tags: ["multi_language", "javascript", "typescript", "go", "rust"]
+  timeout_seconds: 300
+  workspace_setup: "copy_repo_templates"
+  requires_language_tools: true
+  language_tools:
+    javascript: ["node", "npm", "eslint"]
+    typescript: ["tsc", "eslint"]
+    go: ["go", "golangci-lint", "go vet"]
+    rust: ["cargo", "clippy", "miri"]

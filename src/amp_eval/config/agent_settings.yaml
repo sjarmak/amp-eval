@@ -1,0 +1,55 @@
+# Model-Efficacy Evaluation Suite Configuration
+# Controls model selection logic for Amp CLI wrapper
+
+# Default model when no overrides are specified
+default_model: "sonnet-4"
+
+# Oracle trigger configuration
+oracle_trigger:
+  phrase: "consult the oracle:"
+  model: "o3"
+  description: "Automatically switch to o3 when prompt starts with this phrase"
+
+# CLI flag configuration
+cli_flag_gpt5:
+  flag: "--try-gpt5"
+  model: "gpt-5"
+  description: "Override all other logic to force GPT-5 usage"
+
+# Environment variable configuration
+env_var:
+  name: "AMP_MODEL"
+  valid_values: ["sonnet-4", "gpt-5", "o3"]
+  description: "Primary model selection switch"
+
+# Automatic model upgrade rules
+rules:
+  - name: "large_diff_upgrade"
+    condition: "diff_lines > 40"
+    target_model: "gpt-5"
+    description: "Upgrade to GPT-5 for large code changes"
+  
+  - name: "multi_file_upgrade"
+    condition: "touched_files > 2"
+    target_model: "gpt-5"
+    description: "Upgrade to GPT-5 when multiple files are modified"
+  
+  - name: "complex_refactor_upgrade"
+    condition: "diff_lines > 40 AND touched_files > 2"
+    target_model: "gpt-5"
+    description: "High-complexity refactor scenarios"
+
+# Performance thresholds
+token_budget_threshold:
+  sonnet_4: 8000
+  gpt_5: 16000
+  o3: 32000
+  description: "Maximum tokens per model before efficiency warning"
+
+# Model selection precedence (highest to lowest priority)
+selection_precedence:
+  1: "oracle_trigger"
+  2: "cli_flag_gpt5"
+  3: "env_var AMP_MODEL"
+  4: "rules evaluation"
+  5: "default_model"

@@ -1,0 +1,82 @@
+# Tool Calling Micro Evaluation
+# Tests function-calling accuracy on first attempt
+
+name: tool_calling_micro
+description: "Evaluates tool-calling accuracy with 10 micro-prompts"
+
+eval_type: single_response
+registry_path: amp-eval/adapters
+runner: amp_runner
+
+dataset:
+  - prompt: "List all Python files in the current directory"
+    expected_tool: "glob"
+    expected_args: {"filePattern": "*.py"}
+    id: "list_python_files"
+
+  - prompt: "Search for the function 'calculate_sum' in the codebase"
+    expected_tool: "Grep"
+    expected_args: {"pattern": "calculate_sum"}
+    id: "search_function"
+
+  - prompt: "Read the contents of README.md"
+    expected_tool: "Read"
+    expected_args: {"path": "/Users/sjarmak/Documents/amp-eval/README.md"}
+    id: "read_readme"
+
+  - prompt: "Create a new file called test.py with a hello world function"
+    expected_tool: "create_file"
+    expected_args: {"path": "/Users/sjarmak/Documents/amp-eval/test.py"}
+    id: "create_test_file"
+
+  - prompt: "Edit the file config.yaml to change port from 8080 to 3000"
+    expected_tool: "edit_file" 
+    expected_args: {"old_str": "8080", "new_str": "3000"}
+    id: "edit_config_port"
+
+  - prompt: "Run the command 'python --version' to check Python version"
+    expected_tool: "Bash"
+    expected_args: {"cmd": "python --version"}
+    id: "check_python_version"
+
+  - prompt: "Find all TODO comments in JavaScript files"
+    expected_tool: "Grep"
+    expected_args: {"pattern": "TODO", "glob": "**/*.js"}
+    id: "find_todos_js"
+
+  - prompt: "Get diagnostics for the src directory"
+    expected_tool: "get_diagnostics"
+    expected_args: {"path": "/Users/sjarmak/Documents/amp-eval/src"}
+    id: "get_src_diagnostics"
+
+  - prompt: "Search the codebase for authentication implementation"
+    expected_tool: "codebase_search_agent"
+    expected_args: {"query": "authentication implementation"}
+    id: "search_auth_implementation"
+
+  - prompt: "Format the file main.py using the formatter"
+    expected_tool: "format_file"
+    expected_args: {"path": "/Users/sjarmak/Documents/amp-eval/main.py"}
+    id: "format_main_py"
+
+scoring:
+  # Grade based on first tool call correctness
+  method: "tool_call_accuracy"
+  criteria:
+    - tool_name_correct: 40  # 40% for correct tool name
+    - args_present: 30       # 30% for having required args
+    - args_correct: 30       # 30% for correct arg values
+  
+  pass_threshold: 70  # 70% to pass
+  
+grading_template: |
+  First tool call analysis:
+  Tool name: {actual_tool} (expected: {expected_tool})
+  Arguments: {actual_args}
+  Expected: {expected_args}
+  Score: {score}/100
+
+metadata:
+  model_tags: ["tool_calling", "micro", "first_attempt"]
+  timeout_seconds: 30
+  retry_limit: 0  # No retries - first attempt only

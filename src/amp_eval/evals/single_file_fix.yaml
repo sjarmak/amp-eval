@@ -1,0 +1,71 @@
+# Single File Bug Fix Evaluation  
+# Tests code-fix success graded by pytest execution
+
+name: single_file_fix
+description: "Evaluates bug-fixing ability on isolated Python files"
+
+eval_type: code_fix
+registry_path: amp-eval/adapters
+runner: amp_runner
+
+dataset:
+  - prompt: "Fix the syntax error in tasks/repos/calc/broken_calculator.py"
+    workspace: "tasks/repos/calc"
+    test_command: "pytest tests/test_calculator.py -q"
+    expected_files_modified: ["broken_calculator.py"]
+    id: "fix_syntax_error"
+    difficulty: "easy"
+
+  - prompt: "Fix the logic error in tasks/repos/string_utils/text_processor.py - the reverse function doesn't work correctly"
+    workspace: "tasks/repos/string_utils" 
+    test_command: "pytest tests/test_text_processor.py::test_reverse -q"
+    expected_files_modified: ["text_processor.py"]
+    id: "fix_reverse_logic"
+    difficulty: "medium"
+
+  - prompt: "Debug and fix the infinite loop in tasks/repos/algorithms/fibonacci.py"
+    workspace: "tasks/repos/algorithms"
+    test_command: "timeout 10s pytest tests/test_fibonacci.py -q"
+    expected_files_modified: ["fibonacci.py"]
+    id: "fix_infinite_loop"
+    difficulty: "medium"
+
+  - prompt: "Fix the import error and missing dependency in tasks/repos/data_analysis/csv_parser.py"
+    workspace: "tasks/repos/data_analysis"
+    test_command: "pytest tests/test_csv_parser.py -q"
+    expected_files_modified: ["csv_parser.py", "requirements.txt"]
+    id: "fix_import_error"
+    difficulty: "hard"
+
+  - prompt: "Fix the race condition in tasks/repos/concurrency/thread_pool.py causing test failures"
+    workspace: "tasks/repos/concurrency"
+    test_command: "pytest tests/test_thread_pool.py -q --count=5"
+    expected_files_modified: ["thread_pool.py"]
+    id: "fix_race_condition"
+    difficulty: "hard"
+
+scoring:
+  method: "pytest_execution"
+  criteria:
+    - tests_pass: 70        # 70% if all tests pass
+    - correct_files: 20     # 20% if only expected files modified
+    - efficiency: 10        # 10% for minimal changes
+  
+  pass_threshold: 70
+  max_attempts: 2
+
+grading_template: |
+  Bug fix evaluation for {id}:
+  Test command: {test_command}
+  Test result: {test_status}
+  Files modified: {files_modified}
+  Expected files: {expected_files_modified}
+  Score: {score}/100
+  
+  Test output:
+  {test_output}
+
+metadata:
+  model_tags: ["bug_fix", "pytest", "single_file"]
+  timeout_seconds: 120
+  workspace_setup: "copy_repo_templates"

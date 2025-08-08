@@ -1,0 +1,98 @@
+# Performance Optimization Evaluation
+# Tests ability to identify and fix performance bottlenecks
+
+name: performance_optimization
+description: "Evaluates performance optimization skills with runtime improvements measurement"
+
+eval_type: performance
+registry_path: amp-eval/adapters
+runner: amp_runner
+
+dataset:
+  - prompt: "Optimize the slow list search in tasks/repos/performance/slow_search.py - it currently takes O(n²) time but should be O(log n)"
+    workspace: "tasks/repos/performance"
+    test_command: "pytest tests/test_slow_search.py -q"
+    benchmark_command: "python benchmark_search.py"
+    expected_improvement: 50  # 50x faster minimum
+    expected_files_modified: ["slow_search.py"]
+    id: "optimize_search_algorithm"
+    difficulty: "medium"
+    
+  - prompt: "Fix the memory leak in tasks/repos/performance/memory_hog.py - it consumes too much memory processing large datasets"
+    workspace: "tasks/repos/performance"
+    test_command: "pytest tests/test_memory_hog.py -q"
+    benchmark_command: "python benchmark_memory.py"
+    expected_improvement: 10  # 10x less memory usage
+    expected_files_modified: ["memory_hog.py"]
+    id: "fix_memory_leak"
+    difficulty: "medium"
+    
+  - prompt: "Optimize the database queries in tasks/repos/performance/db_queries.py by reducing N+1 queries and adding proper indexing hints"
+    workspace: "tasks/repos/performance"
+    test_command: "pytest tests/test_db_queries.py -q"
+    benchmark_command: "python benchmark_db.py"
+    expected_improvement: 20  # 20x faster queries
+    expected_files_modified: ["db_queries.py"]
+    id: "optimize_db_queries"
+    difficulty: "hard"
+    
+  - prompt: "Parallelize the CPU-intensive processing in tasks/repos/performance/cpu_bound.py using multiprocessing or threading"
+    workspace: "tasks/repos/performance"
+    test_command: "pytest tests/test_cpu_bound.py -q"
+    benchmark_command: "python benchmark_cpu.py"
+    expected_improvement: 4   # 4x faster (assuming 4+ cores)
+    expected_files_modified: ["cpu_bound.py"]
+    id: "parallelize_cpu_work"
+    difficulty: "medium"
+    
+  - prompt: "Optimize the inefficient regex patterns in tasks/repos/performance/text_processing.py that cause catastrophic backtracking"
+    workspace: "tasks/repos/performance"
+    test_command: "pytest tests/test_text_processing.py -q"
+    benchmark_command: "python benchmark_regex.py"
+    expected_improvement: 100  # 100x faster regex
+    expected_files_modified: ["text_processing.py"]
+    id: "optimize_regex_patterns"
+    difficulty: "hard"
+
+scoring:
+  method: "performance_improvement"
+  criteria:
+    - tests_pass: 30              # 30% if functionality preserved
+    - performance_gain: 50        # 50% based on actual speedup
+    - code_quality: 10            # 10% for clean optimized code
+    - resource_efficiency: 10     # 10% for memory/CPU efficiency
+  
+  pass_threshold: 70
+  max_attempts: 3
+
+grading_template: |
+  Performance optimization evaluation for {id}:
+  Difficulty: {difficulty}
+  
+  Functionality:
+  Test command: {test_command}
+  Test result: {test_status}
+  
+  Performance metrics:
+  Benchmark command: {benchmark_command}
+  Before: {performance_before}
+  After: {performance_after}
+  Improvement: {actual_improvement}x (expected: {expected_improvement}x)
+  
+  Files modified: {files_modified}
+  Expected: {expected_files_modified}
+  
+  Resource usage:
+  Memory delta: {memory_delta}
+  CPU efficiency: {cpu_efficiency}
+  
+  Score: {score}/100
+  
+  Benchmark output:
+  {benchmark_output}
+
+metadata:
+  model_tags: ["performance", "optimization", "benchmarking"]
+  timeout_seconds: 600  # Longer timeout for performance testing
+  workspace_setup: "copy_repo_templates"
+  requires_benchmarking: true

@@ -1,0 +1,112 @@
+# Real-World Scenarios Evaluation
+# Tests common real-world development scenarios and industry patterns
+
+name: real_world_scenarios
+description: "Evaluates real-world development scenarios including API integration, data processing, and production-ready patterns"
+
+eval_type: real_world
+registry_path: amp-eval/adapters
+runner: amp_runner
+
+dataset:
+  - prompt: "Implement a rate-limited API client in tasks/repos/real_world/api_integration/ that handles retries, circuit breaking, and proper error responses"
+    workspace: "tasks/repos/real_world/api_integration"
+    test_command: "pytest tests/ -v && python integration_test.py"
+    expected_files_modified: ["api_client.py"]
+    expected_files_created: ["rate_limiter.py", "circuit_breaker.py"]
+    scenario_type: "api_integration"
+    id: "rate_limited_api_client"
+    difficulty: "medium"
+    
+  - prompt: "Build a distributed task queue system in tasks/repos/real_world/task_queue/ with Redis backend, worker scaling, and failure recovery"
+    workspace: "tasks/repos/real_world/task_queue"
+    test_command: "pytest tests/ -v && docker-compose up -d && python load_test.py"
+    expected_files_created: ["worker.py", "queue_manager.py", "task_registry.py"]
+    scenario_type: "distributed_system"
+    id: "distributed_task_queue"
+    difficulty: "hard"
+    
+  - prompt: "Implement a real-time data pipeline in tasks/repos/real_world/data_pipeline/ that processes streaming events with exactly-once semantics"
+    workspace: "tasks/repos/real_world/data_pipeline"
+    test_command: "pytest tests/ -v && python stream_test.py"
+    expected_files_created: ["stream_processor.py", "event_handler.py", "checkpoint_manager.py"]
+    scenario_type: "data_processing"
+    id: "realtime_data_pipeline"
+    difficulty: "hard"
+    
+  - prompt: "Create a microservice authentication system in tasks/repos/real_world/auth_service/ with JWT, refresh tokens, and role-based access control"
+    workspace: "tasks/repos/real_world/auth_service"
+    test_command: "pytest tests/ -v && python security_audit.py"
+    expected_files_created: ["auth_handler.py", "token_manager.py", "rbac.py"]
+    scenario_type: "microservice"
+    id: "auth_microservice"
+    difficulty: "medium"
+    
+  - prompt: "Build a monitoring and alerting system in tasks/repos/real_world/monitoring/ with metrics collection, anomaly detection, and notification channels"
+    workspace: "tasks/repos/real_world/monitoring"
+    test_command: "pytest tests/ -v && python metrics_test.py"
+    expected_files_created: ["metrics_collector.py", "anomaly_detector.py", "alerting.py"]
+    scenario_type: "monitoring"
+    id: "monitoring_system"
+    difficulty: "medium"
+    
+  - prompt: "Implement a file storage service in tasks/repos/real_world/file_service/ with chunked uploads, deduplication, and CDN integration"
+    workspace: "tasks/repos/real_world/file_service"
+    test_command: "pytest tests/ -v && python storage_test.py"
+    expected_files_created: ["upload_handler.py", "deduplication.py", "cdn_manager.py"]
+    scenario_type: "file_handling"
+    id: "file_storage_service"
+    difficulty: "hard"
+
+scoring:
+  method: "real_world_quality"
+  criteria:
+    - functionality: 30           # 30% basic functionality works
+    - production_ready: 25        # 25% production-ready patterns
+    - error_handling: 20          # 20% proper error handling
+    - performance: 15             # 15% performance considerations
+    - security: 10                # 10% security best practices
+  
+  pass_threshold: 75
+  max_attempts: 3
+
+grading_template: |
+  Real-world scenario evaluation for {id}:
+  Scenario type: {scenario_type}
+  Difficulty: {difficulty}
+  
+  Functionality:
+  Test command: {test_command}
+  Test result: {test_status}
+  
+  Production readiness:
+  - Error handling: {error_handling_score}
+  - Logging/monitoring: {logging_score}
+  - Configuration management: {config_score}
+  - Graceful degradation: {degradation_score}
+  
+  Performance metrics:
+  - Response time: {response_time}
+  - Throughput: {throughput}
+  - Resource usage: {resource_usage}
+  
+  Security analysis:
+  - Input validation: {input_validation}
+  - Authentication/authorization: {auth_security}
+  - Data protection: {data_protection}
+  
+  Files created: {files_created}
+  Expected: {expected_files_created}
+  
+  Score: {score}/100
+  
+  Integration test output:
+  {integration_output}
+
+metadata:
+  model_tags: ["real_world", "production", "integration", "scalability"]
+  timeout_seconds: 600
+  workspace_setup: "copy_repo_templates"
+  requires_docker: true
+  requires_redis: true
+  external_dependencies: ["docker", "redis", "postgresql"]
