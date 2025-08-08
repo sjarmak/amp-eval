@@ -120,7 +120,7 @@ def suite(ctx: click.Context, eval_suite: str, workspace: str,
         
         # Run evaluations
         results = []
-        prompts = suite_config.get("prompts", [])
+        prompts = suite_config.get("prompts", []) or suite_config.get("dataset", [])
         
         for prompt_config in track(prompts, description="Running evaluations..."):
             prompt = prompt_config["prompt"]
