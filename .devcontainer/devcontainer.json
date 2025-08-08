@@ -32,12 +32,13 @@
       }
     }
   },
-  "postCreateCommand": "npm install -g @sourcegraph/amp && pip install -r requirements.txt && pip install -r requirements-dev.txt && pip install -e . && pre-commit install",
+  "postCreateCommand": "chmod +x .devcontainer/setup.sh && .devcontainer/setup.sh",
   "remoteUser": "vscode",
 
   "containerEnv": {
     "PYTHONPATH": "/workspaces/amp-eval/src",
-    "PATH": "${localEnv:PATH}:/home/vscode/.local/bin"
+    "PATH": "${localEnv:PATH}:/home/vscode/.local/bin",
+    "AMP_API_KEY": "${localEnv:AMP_API_KEY}"
   },
   "forwardPorts": [8501, 8888],
   "portsAttributes": {
