@@ -132,8 +132,11 @@ class AmpRunner:
         """Execute Amp CLI and return structured results."""
         start_time = time.time()
         
-        # Build amp command
-        cmd = ["amp", prompt, f"--model={model}", f"--workspace={workspace_path}"]
+        # Build amp command - default is sonnet-4, use --try-gpt5 for GPT-5
+        cmd = ["amp", "--dangerously-allow-all", "-x"]
+        if model == "gpt-5":
+            cmd.append("--try-gpt5")
+        cmd.append(prompt)
         
         try:
             # Execute amp command
