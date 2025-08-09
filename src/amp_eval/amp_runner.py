@@ -116,6 +116,80 @@ class AmpRunner:
         
         return False
     
+    def _extract_thread_id(self, log_path: str) -> Optional[str]:
+        """Extract thread ID from Amp debug logs."""
+        try:
+            with open(log_path, 'r') as fp:
+                for raw in fp:
+                    try:
+                        j = json.loads(raw.strip())
+                        # Look for thread ID in various log formats
+                        if "threadId" in j:
+                            return j["threadId"]
+                        if "thread_id" in j:
+                            return j["thread_id"]
+                        # Sometimes it's in the message
+                        message = j.get("message", "")
+                        if "thread" in message.lower():
+                            # Extract thread ID from message like "Thread T-abc123"
+                            import re
+                            match = re.search(r'T-[a-f0-9-]+', message)
+                            if match:
+                                return match.group(0)
+                    except json.JSONDecodeError:
+                        continue
+        except Exception:
+            pass
+        return None
+    
+    def _get_thread_tool_mapping(self, thread_id: str) -> Dict[str, str]:
+        """Get tool call ID to tool name mapping from thread export."""
+        if not thread_id:
+            return {}
+        
+        try:
+            # Export thread data as JSON
+            result = subprocess.run(
+                ["amp", "threads", "get", thread_id, "--json"],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            
+            if result.returncode != 0:
+                logger.warning(f"Failed to export thread {thread_id}: {result.stderr}")
+                return {}
+            
+            # Parse thread data and build mapping
+            id_to_tool = {}
+            thread_data = json.loads(result.stdout)
+            
+            # Handle different thread export formats
+            events = thread_data if isinstance(thread_data, list) else thread_data.get("events", [])
+            
+            for event in events:
+                # Look for tool call events
+                tool = event.get('tool', {})
+                call_id = event.get('call_id') or tool.get('call_id') or event.get('id')
+                tool_name = tool.get('name')
+                
+                if call_id and tool_name:
+                    id_to_tool[call_id] = tool_name
+                
+                # Also check for tool_call type events
+                if event.get('type') == 'tool_call' or event.get('event') == 'tool_call':
+                    call_id = event.get('id') or event.get('call_id')
+                    tool_name = event.get('name') or event.get('function', {}).get('name')
+                    if call_id and tool_name:
+                        id_to_tool[call_id] = tool_name
+            
+            logger.info(f"Built tool mapping for thread {thread_id}: {id_to_tool}")
+            return id_to_tool
+            
+        except Exception as e:
+            logger.warning(f"Failed to get thread tool mapping: {e}")
+            return {}
+
     def _parse_amp_debug_logs(self, log_path: str) -> ParsedLogs:
         """Parse Amp debug logs to extract structured data."""
         tool_calls: List[Dict[str, Any]] = []
@@ -259,6 +333,16 @@ class AmpRunner:
             token_usage = parsed["token_usage"] or {}
             model_performance = parsed["perf"]
             
+            # Extract thread ID and get complete tool mapping
+            thread_id = self._extract_thread_id(log_file)
+            thread_tool_mapping = self._get_thread_tool_mapping(thread_id)
+            
+            # Enhanced tool calls with thread data
+            for tool_call in tool_calls:
+                tool_id = tool_call.get("tool_id")
+                if tool_id and tool_id in thread_tool_mapping and not tool_call.get("name"):
+                    tool_call["name"] = thread_tool_mapping[tool_id]
+            
             # Read raw log contents for debugging
             raw_log_contents = ""
             try:
@@ -312,7 +396,9 @@ class AmpRunner:
                 "stderr": result.stderr,
                 "returncode": result.returncode,
                 "tool_calls": tool_calls,
-                "debug_log": raw_log_contents
+                "debug_log": raw_log_contents,
+                "thread_id": thread_id,
+                "thread_tool_mapping": thread_tool_mapping
             }
             
             # Add warning if no tool calls detected
