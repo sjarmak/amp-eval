@@ -259,6 +259,14 @@ class AmpRunner:
             token_usage = parsed["token_usage"] or {}
             model_performance = parsed["perf"]
             
+            # Read raw log contents for debugging
+            raw_log_contents = ""
+            try:
+                with open(log_file, 'r') as f:
+                    raw_log_contents = f.read()
+            except:
+                raw_log_contents = "Could not read log file"
+            
             # Fallback to pattern matching if no tool calls found in logs
             if not tool_calls:
                 tool_calls = self._extract_tool_calls(result.stdout + "\n" + result.stderr, start_time)
@@ -303,7 +311,8 @@ class AmpRunner:
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "returncode": result.returncode,
-                "tool_calls": tool_calls
+                "tool_calls": tool_calls,
+                "debug_log": raw_log_contents
             }
             
             # Add warning if no tool calls detected
